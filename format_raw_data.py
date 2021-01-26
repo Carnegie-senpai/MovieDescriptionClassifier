@@ -1,22 +1,29 @@
+
 import csv
-csvfile = open("./data/IMDb movies.csv", encoding="utf-8")
+from sys import argv
+from pickle import dump, load
+print("Opening csv file")
+
+
+csvfile = open(argv[1], encoding="utf-8")
 count = 0
 movie_list = []
+print("Reading csv file")
 for row in csv.reader(csvfile):
     temp = []
     for item in row:
         temp.append(item.lower().strip())
     movie_list.append(temp)
 
+print("Gather genres")
 genres = set()
-print(movie_list[0])
-
 for row in movie_list:
     for item in row[5].split(","):
         genres.add(item.strip())
 
     movie_dict = {}
-print(genres)
+
+print("Creating dictionary")
 for row in movie_list[1:]:
     movie_dict[row[0]] = {
         movie_list[0][1]:row[1],
@@ -42,6 +49,7 @@ for row in movie_list[1:]:
         movie_list[0][21]:row[21]
     }
 
+print("Splitting genre, actors, and writer")
 for key in movie_dict.keys():
     temp = []
     for item in movie_dict[key]["genre"].split(","):
@@ -59,6 +67,7 @@ for key in movie_dict.keys():
 Not much of a point in continuing to break down categories like above if we don't end up using them.
 Pickle file or turn it into a json or something to store it. Get tf-idf for words to use for DNN.
 Look into DNN trigram
-'''    
-
-print(movie_dict[movie_list[100][0]]["writer"])
+'''  
+print("Dumping file")
+dump(movie_dict,open("./data/pickled_data","wb"))
+print("Finished Processing raw {}".format(argv[1]))
