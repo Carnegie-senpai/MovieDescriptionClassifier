@@ -88,10 +88,21 @@ vprint("Converting testing tfidf matrix to tensor")
 testing_tensor = convert_to_tensor(testing_tfidf)
 
 vprint("Writing Results to Files")
-training_file = open("./data/training_data_vector", "wb")
-verifying_file = open("./data/verification_data_vector", "wb")
-testing_file = open("./data/testing_data_vector", "wb")
+training_file = open("./data/training_data_tensor", "wb")
+verifying_file = open("./data/verification_data_tensor", "wb")
+testing_file = open("./data/testing_data_tensor", "wb")
+
+training_vectorizer_file = open("./data/training_data_vectorizer","wb")
+verifiying_vectorizer_file = open("./data/verifiying_data_vectorizer","wb")
+testing_vectorizer_file = open("./data/testing_data_vectorizer","wb")
+
+
 dump(training_tensor, training_file)
 dump(verifying_tensor, verifying_file)
 dump(testing_tensor, testing_file)
+
+dump(training_tfidf,training_vectorizer_file)
+dump(verifying_tfidf,verifiying_vectorizer_file)
+dump(testing_tfidf,testing_vectorizer_file)
+
 print("Finished Creating Bag of Words")

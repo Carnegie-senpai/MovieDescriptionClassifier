@@ -70,4 +70,5 @@ Look into DNN trigram
 '''  
 print("Dumping file")
 dump(movie_dict,open("./data/pickled_data","wb"))
+dump(genres,open("./data/pickled_genres","wb"))
 print("Finished Processing raw {}".format(argv[1]))
