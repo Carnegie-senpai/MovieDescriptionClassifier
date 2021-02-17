@@ -21,7 +21,7 @@ def vprint(msg):
     if (verbose):
         print(msg)
 movie_dict = load(file)
-
+genres:list = list(load(open("./data/pickled_genres","rb")))
 # def trigram(index:int,array: list,):
 #     if index+2 < len(array):
 #         return "{}{}{}".format(array[index].strip(".,;:'\"?!"),array[index+1].strip(".,;:'\"?!"),array[index+2].strip(".,;:'\"?!"))
@@ -35,24 +35,33 @@ verifying_size = int(.8*len(random_list))
 k = list(movie_dict.keys())
 
 training_data = []
+training_target = []
 verifying_data = []
+verifying_target = []
 testing_data = []
+testing_target = []
+
 vprint("Selecting Training Data")
 for index in range(0, training_size):
     training_data.append(movie_dict[k[random_list[index]]]["description"])
+    training_target.append(movie_dict[k[random_list[index]]]["genre"])
+print(k[random_list[1]],movie_dict[k[random_list[1]]]["genre"],training_data[1])
 vprint("Selecting Verification Data")
 for index in range(training_size, verifying_size):
     verifying_data.append(movie_dict[k[random_list[index]]]["description"])
+    verifying_target.append(movie_dict[k[random_list[index]]]["genre"])
 vprint("Selecting Testing Data")
 for index in range(verifying_size, len(random_list)):
     testing_data.append(movie_dict[k[random_list[index]]]["description"])
+    testing_target.append(movie_dict[k[random_list[index]]]["genre"])
+
 
 vprint("Vectorizing Training Data")
-training_vector = TfidfVectorizer(ngram_range=(1, 3))
+training_vector = TfidfVectorizer(ngram_range=(1, 3),max_df=0.8,min_df=10)
 vprint("Vectorizing Verification Data")
-verifying_vector = TfidfVectorizer(ngram_range=(1, 3))
+verifying_vector = TfidfVectorizer(ngram_range=(1, 3),max_df=0.8,min_df=10)
 vprint("Vectorizing Testing Data")
-testing_vector = TfidfVectorizer(ngram_range=(1, 3))
+testing_vector = TfidfVectorizer(ngram_range=(1, 3),max_df=0.8,min_df=10)
 
 vprint("Constructing tfidf sparse matrix for training data")
 training_tfidf = training_vector.fit_transform(training_data)
@@ -60,10 +69,6 @@ vprint("Constructing tfidf sparse matrix for verification data")
 verifying_tfidf = verifying_vector.fit_transform(verifying_data)
 vprint("Constructing tfidf sparse matrix for testing data")
 testing_tfidf = testing_vector.fit_transform(testing_data)
-
-training_data = []
-verifying_data = []
-testing_data = []
 
 
 def convert_to_tensor(sparse_csr_matrix):
@@ -106,3 +111,51 @@ dump(verifying_tfidf,verifiying_vectorizer_file)
 dump(testing_tfidf,testing_vectorizer_file)
 
 print("Finished Creating Bag of Words")
+
+print("Creating target tensor")
+training_targets = []
+verifying_targets = []
+testing_targets = []
+for value in training_target:
+    vector = [0]*len(genres)
+    for index in range(len(genres)):
+        if genres[index] in value:
+            vector[index] = 1
+    training_targets.append(vector)
+for value in verifying_target:
+    vector = [0]*len(genres)
+    for index in range(len(genres)):
+        if genres[index] in value:
+            vector[index] = 1
+    verifying_targets.append(vector)
+for value in testing_target:
+    vector = [0]*len(genres)
+    for index in range(len(genres)):
+        if genres[index] in value:
+            vector[index] = 1
+    testing_targets.append(vector)
+
+
+
+def targets_to_tensor(targets:list):
+    if torch.cuda.is_available():
+        device="cuda"
+    else:
+        device="cpu"
+    tens = torch.from_numpy(np.array(targets)).long()
+    return tens.to(device="cuda")
+
+training_targets_file = (open("./data/training_targets","wb"))
+verifying_targets_file = (open("./data/verifying_targets","wb"))
+testing_targets_file = (open("./data/testing_targets","wb"))
+
+training_target_tensor = targets_to_tensor(training_targets)
+verifying_target_tensor = targets_to_tensor(verifying_targets)
+testing_target_tensor = targets_to_tensor(testing_targets)
+
+
+dump(training_target_tensor,training_targets_file)
+dump(verifying_target_tensor,verifying_targets_file)
+dump(testing_target_tensor,testing_targets_file)
+print("Created target tensor")
+
