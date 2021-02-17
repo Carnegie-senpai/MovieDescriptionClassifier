@@ -12,19 +12,22 @@ class SimpleNeuralNetwork(nn.Module):
         else:
             self.device = "cpu"
             self.cpu()
-        self.loss = CrossEntropyLoss()
-        self.linear_layer = Linear(input_size,hidden_size)
-        self.linear_layer2 = Linear(hidden_size,class_count)
+        print("Model is {}".format(self.device))
+        #self.
+        self.linear_layer = Linear(input_size,hidden_size).cuda()
+        self.linear_layer2 = Linear(hidden_size,class_count).cuda()
 
 
-    def forward(self,input_data):
+    def forward(self,input_data:torch.Tensor):
         # Input is a vectorized set of tfidf values for a given document
         # This is transformed into a probability value using softmax
 
         # dot product of weight for input value
         # get softmax of product
         #return
+        #print("shape of data: ",input_data.shape)
         input_data = self.linear_layer(input_data)
-        input_data = nn.functional.sigmoid(input_data)
+        input_data = torch.sigmoid(input_data)
         input_data = self.linear_layer2(input_data)
+        input_data = torch.sigmoid(input_data)
         return input_data
