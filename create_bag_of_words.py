@@ -21,7 +21,7 @@ def vprint(msg):
     if (verbose):
         print(msg)
 movie_dict = load(file)
-genres:list = list(load(open("./data/pickled_genres","rb")))
+genres:list = sorted(list(load(open("./data/pickled_genres","rb"))))
 # def trigram(index:int,array: list,):
 #     if index+2 < len(array):
 #         return "{}{}{}".format(array[index].strip(".,;:'\"?!"),array[index+1].strip(".,;:'\"?!"),array[index+2].strip(".,;:'\"?!"))
