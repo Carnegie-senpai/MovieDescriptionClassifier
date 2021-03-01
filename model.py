@@ -12,10 +12,8 @@ class SimpleNeuralNetwork(nn.Module):
         else:
             self.device = "cpu"
             self.cpu()
-        print("Model is {}".format(self.device))
-        #self.
-        self.linear_layer = Linear(input_size,hidden_size).cuda()
-        self.linear_layer2 = Linear(hidden_size,class_count).cuda()
+        self.linear_layer = Linear(input_size,hidden_size).to(device=self.device)
+        self.linear_layer2 = Linear(hidden_size,class_count).to(device=self.device)
 
 
     def forward(self,input_data:torch.Tensor):

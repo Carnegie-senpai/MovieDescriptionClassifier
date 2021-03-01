@@ -5,6 +5,12 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from random import shuffle
 import numpy as np
 import torch
+
+global device 
+if torch.cuda.is_available():
+    device = "cuda"
+else:
+    device = "cpu"
 # Creates the training data sets. Borken up into different data set based on usage.
 # 60% is dedicated to training. 20% to verification. 20% to testing. All data is
 # vectorized bag of words with tfidf. After data is finished being processed it is pickled
@@ -22,10 +28,7 @@ def vprint(msg):
         print(msg)
 movie_dict = load(file)
 genres:list = sorted(list(load(open("./data/pickled_genres","rb"))))
-# def trigram(index:int,array: list,):
-#     if index+2 < len(array):
-#         return "{}{}{}".format(array[index].strip(".,;:'\"?!"),array[index+1].strip(".,;:'\"?!"),array[index+2].strip(".,;:'\"?!"))
-#     return ""
+
 print("Creating Bag of Words")
 bag_of_words = defaultdict(int)
 random_list = list(range(0, len(movie_dict.keys())))
@@ -45,7 +48,9 @@ verifying_keys = []
 testing_keys = []
 
 
-
+# This code block randomly creates training, testing, and verifying data out of 
+# the data set. This is to try and account for any biases that may arrise from the
+# ordering of the dataset. 
 vprint("Selecting Training Data")
 for index in range(0, training_size):
     training_data.append(movie_dict[k[random_list[index]]]["description"])
@@ -64,21 +69,24 @@ for index in range(verifying_size, len(random_list)):
     testing_keys.append(k[random_list[index]])
 
 
-
+# Creates training vector
 vprint("Vectorizing Training Data")
 training_vector = TfidfVectorizer(ngram_range=(1, 3),max_df=0.8,min_df=10)
-vprint("Vectorizing Verification Data")
-verifying_vector = TfidfVectorizer(ngram_range=(1, 3),max_df=0.8,min_df=10)
-vprint("Vectorizing Testing Data")
-testing_vector = TfidfVectorizer(ngram_range=(1, 3),max_df=0.8,min_df=10)
+# vprint("Vectorizing Verification Data")
+# verifying_vector = TfidfVectorizer(ngram_range=(1, 3),max_df=0.8,min_df=10)
+# vprint("Vectorizing Testing Data")
+# testing_vector = TfidfVectorizer(ngram_range=(1, 3),max_df=0.8,min_df=10)
 
+# Creates the training sparse matrix
 vprint("Constructing tfidf sparse matrix for training data")
-training_tfidf = training_vector.fit_transform(training_data)
-vprint("Constructing tfidf sparse matrix for verification data")
-verifying_tfidf = verifying_vector.fit_transform(verifying_data)
-vprint("Constructing tfidf sparse matrix for testing data")
-testing_tfidf = testing_vector.fit_transform(testing_data)
-print("params: ",training_vector.transform(testing_data) 
+training_sparse_matrix = training_vector.fit_transform(training_data)
+testing_sparse_matrix = training_vector.transform(testing_data)
+verifying_sparse_matrix = training_vector.transform(verifying_data)
+# vprint("Constructing tfidf sparse matrix for verification data")
+# verifying_tfidf = verifying_vector.fit_transform(verifying_data)
+# vprint("Constructing tfidf sparse matrix for testing data")
+# testing_tfidf = testing_vector.fit_transform(testing_data)
+# print("params: ",training_vector.transform(testing_data) 
 training_key_file = open("./data/training_keys","wb")
 verifying_key_file = open("./data/verifying_keys","wb")
 testing_key_file = open("./data/testing_keys","wb")
@@ -87,33 +95,28 @@ dump(training_keys,training_key_file)
 dump(verifying_keys,verifying_key_file)
 dump(testing_keys,testing_key_file)
 
+
 def convert_to_tensor(sparse_csr_matrix):
     sparse_coo = sparse_csr_matrix.tocoo().astype(np.float32)
-    if torch.cuda.is_available():
-        device = "cuda"
-        indices = torch.from_numpy(np.vstack((sparse_coo.row, sparse_coo.col))).long().cuda()
-        values = torch.from_numpy(sparse_coo.data).cuda()
-    else:
-        indices = torch.from_numpy(np.vstack((sparse_coo.row, sparse_coo.col))).long()
-        values = torch.from_numpy(sparse_coo.data)
-        device = "cpu"
+    indices = torch.from_numpy(np.vstack((sparse_coo.row, sparse_coo.col))).long().to(device=device)
+    values = torch.from_numpy(sparse_coo.data).to(device=device)
     shape = torch.Size(sparse_coo.shape)
     return torch.sparse_coo_tensor(indices, values, shape, device=torch.device(device))
 
 
 vprint("Converting training tfidf matrix to tensor")
-training_tensor = convert_to_tensor(training_tfidf)
+training_tensor = convert_to_tensor(training_sparse_matrix)
 vprint("Converting verifying tfidf matrix to tensor")
-verifying_tensor = convert_to_tensor(verifying_tfidf)
+verifying_tensor = convert_to_tensor(verifying_sparse_matrix)
 vprint("Converting testing tfidf matrix to tensor")
-testing_tensor = convert_to_tensor(testing_tfidf)
+testing_tensor = convert_to_tensor(testing_sparse_matrix)
 
 vprint("Writing Results to Files")
 training_file = open("./data/training_data_tensor", "wb")
 verifying_file = open("./data/verification_data_tensor", "wb")
 testing_file = open("./data/testing_data_tensor", "wb")
 
-training_vectorizer_file = open("./data/training_data_vectorizer","wb")
+training_sparse_matrix_file = open("./data/training_sparse_matrix","wb")
 verifiying_vectorizer_file = open("./data/verifiying_data_vectorizer","wb")
 testing_vectorizer_file = open("./data/testing_data_vectorizer","wb")
 
@@ -122,9 +125,9 @@ dump(training_tensor, training_file)
 dump(verifying_tensor, verifying_file)
 dump(testing_tensor, testing_file)
 
-dump(training_tfidf,training_vectorizer_file)
-dump(verifying_tfidf,verifiying_vectorizer_file)
-dump(testing_tfidf,testing_vectorizer_file)
+# dump(training_sparse_matrix,training_sparse_matrix_file)
+# dump(verifying_tfidf,verifiying_vectorizer_file)
+# dump(testing_tfidf,testing_vectorizer_file)
 
 print("Finished Creating Bag of Words")
 
@@ -154,12 +157,8 @@ for value in testing_target:
 
 
 def targets_to_tensor(targets:list):
-    if torch.cuda.is_available():
-        device="cuda"
-    else:
-        device="cpu"
     tens = torch.from_numpy(np.array(targets)).long()
-    return tens.to(device="cuda")
+    return tens.to(device=device)
 
 training_targets_file = (open("./data/training_targets","wb"))
 verifying_targets_file = (open("./data/verifying_targets","wb"))
@@ -174,4 +173,3 @@ dump(training_target_tensor,training_targets_file)
 dump(verifying_target_tensor,verifying_targets_file)
 dump(testing_target_tensor,testing_targets_file)
 print("Created target tensor")
-
