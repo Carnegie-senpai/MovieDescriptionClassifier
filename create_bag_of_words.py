@@ -40,20 +40,29 @@ verifying_data = []
 verifying_target = []
 testing_data = []
 testing_target = []
+training_keys = []
+verifying_keys = []
+testing_keys = []
+
+
 
 vprint("Selecting Training Data")
 for index in range(0, training_size):
     training_data.append(movie_dict[k[random_list[index]]]["description"])
     training_target.append(movie_dict[k[random_list[index]]]["genre"])
+    training_keys.append(k[random_list[index]])
 print(k[random_list[1]],movie_dict[k[random_list[1]]]["genre"],training_data[1])
 vprint("Selecting Verification Data")
 for index in range(training_size, verifying_size):
     verifying_data.append(movie_dict[k[random_list[index]]]["description"])
     verifying_target.append(movie_dict[k[random_list[index]]]["genre"])
+    verifying_keys.append(k[random_list[index]])
 vprint("Selecting Testing Data")
 for index in range(verifying_size, len(random_list)):
     testing_data.append(movie_dict[k[random_list[index]]]["description"])
     testing_target.append(movie_dict[k[random_list[index]]]["genre"])
+    testing_keys.append(k[random_list[index]])
+
 
 
 vprint("Vectorizing Training Data")
@@ -69,7 +78,14 @@ vprint("Constructing tfidf sparse matrix for verification data")
 verifying_tfidf = verifying_vector.fit_transform(verifying_data)
 vprint("Constructing tfidf sparse matrix for testing data")
 testing_tfidf = testing_vector.fit_transform(testing_data)
+print("params: ",training_vector.transform(testing_data) 
+training_key_file = open("./data/training_keys","wb")
+verifying_key_file = open("./data/verifying_keys","wb")
+testing_key_file = open("./data/testing_keys","wb")
 
+dump(training_keys,training_key_file)
+dump(verifying_keys,verifying_key_file)
+dump(testing_keys,testing_key_file)
 
 def convert_to_tensor(sparse_csr_matrix):
     sparse_coo = sparse_csr_matrix.tocoo().astype(np.float32)

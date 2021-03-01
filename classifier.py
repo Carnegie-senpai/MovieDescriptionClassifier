@@ -10,13 +10,27 @@ training_file = open("./data/training_data_tensor","rb")
 raw_file = open("./data/pickled_data","rb")
 classes_file = open("./data/pickled_genres","rb")
 training_targets_file = open("./data/training_targets","rb")
+
+training_key_file = open("./data/training_keys","rb")
+verifying_key_file = open("./data/verifying_keys","rb")
+testing_key_file = open("./data/testing_keys","rb")
+
+testing_data_file = open("./data/testing_data_tensor","rb")
+testing_target_file = open("./data/testing_targets","rb")
+
 classes:list = sorted(list(load(classes_file)))
 raw_data = load(raw_file)
+
 print(classes)
 training_data = load(training_file)
 training_targets = load(training_targets_file)
-#print("training data: ",training_data.shape)
-#print("training targets: ",training_targets.shape)
+training_keys = load(training_key_file)
+verifying_keys = load(verifying_key_file)
+testing_keys = load(testing_key_file)
+
+testing_data = load(testing_data_file)
+testing_targets = load(testing_target_file)
+
 assert type(training_data) == torch.Tensor
 assert type(training_targets) == torch.Tensor
 
@@ -30,28 +44,29 @@ def determine_genres(prediction:torch.Tensor ):
     #print(debug)
     return result
 
+
+
 def classifier(data:torch.Tensor,learning_rate:float,epochs:int):
     global training_targets
     model = SimpleNeuralNetwork(data.shape[1],2048,len(classes))
-    optimizer = optim.Adam(params=model.parameters(),lr=learning_rate)
     loss = BCELoss().cuda()
+    optimizer = optim.Adam(params=model.parameters(),lr=learning_rate)
     for i in range(epochs):
-        #run model on data
         model_output = model(data)
-    #    print("model output: ",model_output)
-    #    print("model output shape: ",model_output.shape)
-    #    print("training targets: ",training_targets)
-    #    print("training targets shape",training_targets.shape)
         loss_amount = loss(model_output.float(),training_targets.float())
         print("epoch[{}]: {}".format(i,loss_amount.item()))
         print("prediction: ",determine_genres(model_output[0]))
-        print("truth:",determine_genres(training_targets[0]))
+        print("truth:",determine_genres(training_targets[1199]))
+        print(training_keys[1199])
         model.zero_grad()
         loss_amount.backward()
         optimizer.step()
-        #compare loss based on model's value and actual value
-        #backpropogate loss
-        #zero gradients
-        #step optimizer
+    return model
 
-classifier(training_data,.0005,1000)
+test_loss = BCELoss().cuda()
+model = classifier(training_data,.0005,1)
+testing_out = model(testing_data)
+# testing_loss = test_loss(testing_out.float(),testing_targets.float())
+# print("testing loss: ",testing_loss.item())
+# out_file = open("./data/trained_model_output","wb")
+# dump(model,out_file)
