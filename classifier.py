@@ -55,24 +55,32 @@ def classifier(data:torch.Tensor,learning_rate:float,epochs:int):
     model = SimpleNeuralNetwork(data.shape[1],2048,len(classes))
 
     loss = BCELoss().to(device=device)
+    test_loss = BCELoss().to(device=device)
+
     optimizer = optim.Adam(params=model.parameters(),lr=learning_rate)
     for i in range(epochs):
         model_output = model(data)
         loss_amount = loss(model_output.float(),training_targets.float())
-        print("epoch[{}]: {}".format(i,loss_amount.item()))
-        print("prediction: ",determine_genres(model_output[0]))
-        print("truth:",determine_genres(training_targets[1199]))
-        print(training_keys[1199])
+        # print("epoch[{}]: {}".format(i,loss_amount.item()))
+        # print("prediction: ",determine_genres(model_output[1199]))
+        # print("truth:",determine_genres(training_targets[1199]))
+        # print(training_keys[1199])
+        if (i%100==0):
+            testing_out = model(testing_data)
+            testing_loss = test_loss(testing_out.float(),testing_targets.float())
+            print("---epoch {}---".format(i))
+            print("testing loss: ",testing_loss.item())
+            print("prediction: ",determine_genres(model_output[140]))
+            print("truth:",determine_genres(training_targets[140]))
         model.zero_grad()
         loss_amount.backward()
         optimizer.step()
+
     return model
 
-test_loss = BCELoss().to(device=device)
-model = classifier(training_data,.0005,1)
-testing_out = model(testing_data)
-testing_loss = test_loss(testing_out.float(),testing_targets.float())
-print("testing loss: ",testing_loss.item())
+model = classifier(training_data,.0005,1000)
+
+
 # out_file = open("./data/trained_model_output","wb")
 # dump(model,out_file)
 
