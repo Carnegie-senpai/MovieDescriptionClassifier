@@ -22,3 +22,4 @@ class SimpleNeuralNetwork(nn.Module):
         input_data = self.linear_layer2(input_data)
         input_data = torch.sigmoid(input_data)
         return input_data
+

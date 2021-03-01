@@ -75,3 +75,4 @@ testing_loss = test_loss(testing_out.float(),testing_targets.float())
 print("testing loss: ",testing_loss.item())
 # out_file = open("./data/trained_model_output","wb")
 # dump(model,out_file)
+
