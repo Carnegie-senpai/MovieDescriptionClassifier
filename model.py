@@ -18,7 +18,7 @@ class SimpleNeuralNetwork(nn.Module):
 
     def forward(self,input_data:torch.Tensor):
         input_data = self.linear_layer(input_data)
-        input_data = torch.sigmoid(input_data)
+        # input_data = torch.sigmoid(input_data)
         input_data = self.linear_layer2(input_data)
         input_data = torch.sigmoid(input_data)
         return input_data
