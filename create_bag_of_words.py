@@ -5,7 +5,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from random import shuffle
 import numpy as np
 import torch
-
+import re
 global device 
 if torch.cuda.is_available():
     device = "cuda"
@@ -53,18 +53,18 @@ testing_keys = []
 # ordering of the dataset. 
 vprint("Selecting Training Data")
 for index in range(0, training_size):
-    training_data.append(movie_dict[k[random_list[index]]]["description"])
+    training_data.append(re.sub(r'(?![a-z]| ).',"",movie_dict[k[random_list[index]]]["description"]))
     training_target.append(movie_dict[k[random_list[index]]]["genre"])
     training_keys.append(k[random_list[index]])
 print(k[random_list[1]],movie_dict[k[random_list[1]]]["genre"],training_data[1])
 vprint("Selecting Verification Data")
 for index in range(training_size, verifying_size):
-    verifying_data.append(movie_dict[k[random_list[index]]]["description"])
+    verifying_data.append(re.sub(r'(?![a-z]| ).',"",movie_dict[k[random_list[index]]]["description"]))
     verifying_target.append(movie_dict[k[random_list[index]]]["genre"])
     verifying_keys.append(k[random_list[index]])
 vprint("Selecting Testing Data")
 for index in range(verifying_size, len(random_list)):
-    testing_data.append(movie_dict[k[random_list[index]]]["description"])
+    testing_data.append(re.sub(r'(?![a-z]| ).',"",movie_dict[k[random_list[index]]]["description"]))
     testing_target.append(movie_dict[k[random_list[index]]]["genre"])
     testing_keys.append(k[random_list[index]])
 
@@ -72,21 +72,19 @@ for index in range(verifying_size, len(random_list)):
 # Creates training vector
 vprint("Vectorizing Training Data")
 training_vector = TfidfVectorizer(ngram_range=(1, 3),max_df=0.8,min_df=10)
-# vprint("Vectorizing Verification Data")
-# verifying_vector = TfidfVectorizer(ngram_range=(1, 3),max_df=0.8,min_df=10)
-# vprint("Vectorizing Testing Data")
-# testing_vector = TfidfVectorizer(ngram_range=(1, 3),max_df=0.8,min_df=10)
+
 
 # Creates the training sparse matrix
 vprint("Constructing tfidf sparse matrix for training data")
+
 training_sparse_matrix = training_vector.fit_transform(training_data)
 testing_sparse_matrix = training_vector.transform(testing_data)
 verifying_sparse_matrix = training_vector.transform(verifying_data)
-# vprint("Constructing tfidf sparse matrix for verification data")
-# verifying_tfidf = verifying_vector.fit_transform(verifying_data)
-# vprint("Constructing tfidf sparse matrix for testing data")
-# testing_tfidf = testing_vector.fit_transform(testing_data)
-# print("params: ",training_vector.transform(testing_data) 
+
+tfidf_vector_file = open("./training_vector_file","wb")
+dump(training_vector,tfidf_vector_file)
+
+
 training_key_file = open("./data/training_keys","wb")
 verifying_key_file = open("./data/verifying_keys","wb")
 testing_key_file = open("./data/testing_keys","wb")

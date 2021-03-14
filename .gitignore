@@ -2,3 +2,5 @@ data/**
 __pycache__/**
 settings.json
 MoviedescriptionClassifier.code-workspace
+trained_model_output
+training_vector_file
